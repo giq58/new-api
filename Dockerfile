@@ -19,6 +19,7 @@ ENV GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64}
 WORKDIR /build
 
 ADD go.mod go.sum ./
+ENV GOPROXY https://goproxy.cn,direct
 RUN go mod download
 
 COPY . .
@@ -26,7 +27,10 @@ COPY --from=builder /build/dist ./web/dist
 RUN go build -ldflags "-s -w -X 'github.com/QuantumNous/new-api/common.Version=$(cat VERSION)'" -o new-api
 
 FROM alpine
-
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
+    && apk upgrade --no-cache \
+    && apk add --no-cache ca-certificates tzdata \
+    && update-ca-certificates
 RUN apk upgrade --no-cache \
     && apk add --no-cache ca-certificates tzdata \
     && update-ca-certificates
